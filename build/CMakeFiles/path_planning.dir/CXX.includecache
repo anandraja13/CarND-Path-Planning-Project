@@ -861,8 +861,24 @@ planner.h
 /Users/Anand/udacity_car/term3/CarND-Path-Planning-Project/src/planner.h
 array
 -
+vector
+-
+iterator
+-
+spline.h
+/Users/Anand/udacity_car/term3/CarND-Path-Planning-Project/src/spline.h
 helpers.h
 /Users/Anand/udacity_car/term3/CarND-Path-Planning-Project/src/helpers.h
+
+/Users/Anand/udacity_car/term3/CarND-Path-Planning-Project/src/spline.h
+cstdio
+-
+cassert
+-
+vector
+-
+algorithm
+-
 
 /usr/local/include/uWS/Extensions.h
 string

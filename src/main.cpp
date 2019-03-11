@@ -64,7 +64,7 @@ int main() {
 
       const double time_step = 0.02;
       const double plan_time = 1.0;
-      trajectoryPlanner trajPlanner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
+      TrajectoryPlanner planner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
 
       if (s != "") {
         auto j = json::parse(s);
@@ -102,8 +102,9 @@ int main() {
            * TODO: define a path made up of (x,y) points that the car will visit
            *   sequentially every .02 seconds
            */
-          trajPlanner.setCurrentState(car_x, car_y, car_s, car_d, car_yaw, car_speed);
-          trajPlanner.plan(next_x_vals, next_y_vals);
+          planner.setCurrentState(car_x, car_y, car_s, car_d, car_yaw, car_speed);
+          planner.setPreviousPath(previous_path_x, previous_path_y);
+          planner.plan(next_x_vals, next_y_vals);
 
           msgJson["next_x"] = next_x_vals;
           msgJson["next_y"] = next_y_vals;

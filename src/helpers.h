@@ -34,6 +34,18 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 double mph2mps(double x) { return x * 0.44704; }
+double laneid2frenet(int id) {
+  double lane_width = 4.0;
+  return (double(id)+0.5) * lane_width;
+}
+std::vector<double> vehicle2local(const double vehicle_x, const double vehicle_y, const double ref_x, const double ref_y, const double ref_yaw) {
+  double shift_x = vehicle_x - ref_x;
+  double shift_y = vehicle_y - ref_y;
+
+  std::vector<double> local = { shift_x*cos(0-ref_yaw) - shift_y*sin(0-ref_yaw), shift_x*sin(0-ref_yaw) + shift_y*cos(0-ref_yaw) };
+  return local;
+}
+
 // Calculate distance between two points
 double distance(double x1, double y1, double x2, double y2) {
   return sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
