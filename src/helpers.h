@@ -31,13 +31,28 @@ string hasData(string s) {
 
 // For converting back and forth between radians and degrees.
 constexpr double pi() { return M_PI; }
+
 double deg2rad(double x) { return x * pi() / 180; }
+
 double rad2deg(double x) { return x * 180 / pi(); }
+
 double mph2mps(double x) { return x * 0.44704; }
+
 double laneid2frenet(int id) {
-  double lane_width = 4.0;
+  const double lane_width = 4.0;
   return (double(id)+0.5) * lane_width;
 }
+
+int frenet2laneid(double d) {
+  const double lane_width = 4.0;
+  return int(d / lane_width);
+}
+
+bool in_my_lane(int my_lane_id, double d) {
+  
+  return (my_lane_id == frenet2laneid(d));
+}
+
 std::vector<double> vehicle2local(const double vehicle_x, const double vehicle_y, const double ref_x, const double ref_y, const double ref_yaw) {
   double shift_x = vehicle_x - ref_x;
   double shift_y = vehicle_y - ref_y;

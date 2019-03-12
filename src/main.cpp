@@ -103,7 +103,9 @@ int main() {
            *   sequentially every .02 seconds
            */
           planner.setCurrentState(car_x, car_y, car_s, car_d, car_yaw, car_speed);
-          planner.setPreviousPath(previous_path_x, previous_path_y);
+          planner.setPreviousPath(previous_path_x, previous_path_y, end_path_s, end_path_d);
+          planner.setSensorFusion(sensor_fusion);
+
           planner.plan(next_x_vals, next_y_vals);
 
           msgJson["next_x"] = next_x_vals;

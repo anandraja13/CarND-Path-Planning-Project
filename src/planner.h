@@ -20,7 +20,7 @@ class TrajectoryPlanner {
     };
 
     CarState current_state;
-    double desired_speed;
+
     double time_step;
     double plan_time;
     double num_steps;
@@ -31,6 +31,10 @@ class TrajectoryPlanner {
 
     std::vector<double> previous_path_x;
     std::vector<double> previous_path_y;
+    double end_path_s;
+    double end_path_d;
+
+    std::vector<std::vector<double>> sensor_fusion;
 
     public:
     TrajectoryPlanner(
@@ -43,8 +47,7 @@ class TrajectoryPlanner {
       map_waypoints_y(_map_waypoints_y), 
       time_step(_time_step), plan_time(_plan_time) {
 
-        desired_speed = mph2mps(49.5);
-        num_steps     = (int) plan_time / time_step;
+        num_steps = (int) plan_time / time_step;
     }
 
     void setCurrentState(const double x, const double y, 
@@ -58,9 +61,16 @@ class TrajectoryPlanner {
         current_state.speed = speed;
     }
 
-    void setPreviousPath(const std::vector<double> &prev_path_x, const std::vector<double> &prev_path_y) {
+    void setPreviousPath(const std::vector<double> &prev_path_x, const std::vector<double> &prev_path_y, const double _end_path_s, const double _end_path_d) {
         previous_path_x = prev_path_x;
         previous_path_y = prev_path_y;
+        end_path_s      = _end_path_s;
+        end_path_d      = _end_path_d;
+    }
+
+    void setSensorFusion(const std::vector<std::vector<double>> &_sensor_fusion) {
+
+        sensor_fusion = _sensor_fusion;
     }
 
     void plan(std::vector<double> &next_x_vals, std::vector<double> &next_y_vals) {
@@ -72,8 +82,34 @@ class TrajectoryPlanner {
         std::vector<double> ptsx;
         std::vector<double> ptsy;
 
+        double desired_speed = mph2mps(49.5);
+
         double prev_x, prev_y, ref_x, ref_y, ref_yaw;
         int num_prev = previous_path_x.size();
+        double car_s;
+        if (num_prev>0) {
+            car_s = end_path_s;
+        }
+
+        bool too_close = false;
+        double too_close_dist = 30.0;
+        for (auto sf : sensor_fusion) {
+
+            double sf_d = sf[6];
+            if (in_my_lane(1, sf_d)) {
+                double vx(sf[3]), vy(sf[4]);
+                double check_speed = sqrt(vx * vx + vy * vy);
+                double check_car_s = sf[5];
+
+                check_car_s += time_step * double(num_prev) * check_speed;
+
+                if ( (check_car_s > car_s) && (check_car_s-car_s < too_close_dist) ) {
+                    desired_speed = mph2mps(29.5);
+                    too_close = true;
+                }
+            }
+        }
+
         // If there aren't sufficient previous point, extrapolate backwards
         if (num_prev < 2) {
             ref_x   = current_state.x;
@@ -109,7 +145,7 @@ class TrajectoryPlanner {
         double look_dist(30.0);
         int num_looks(3);
 
-        double car_s = current_state.s;
+        car_s = current_state.s;
         double car_d = laneid2frenet(1);
         for (int l = 1; l <= num_looks; l++) {
             std::vector<double> look_ahead_pt = getXY(car_s + l*look_dist, car_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
@@ -165,8 +201,6 @@ class TrajectoryPlanner {
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
         }
-
-
 
         /*
         double dist_inc = desired_speed * time_step;
