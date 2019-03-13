@@ -5,6 +5,8 @@
 #include <vector>
 #include <iterator>
 
+#include <iostream>
+
 #include "spline.h"
 #include "helpers.h"
 
@@ -24,6 +26,7 @@ class TrajectoryPlanner {
     double time_step;
     double plan_time;
     double num_steps;
+    double desired_speed;
 
     const std::vector<double> &map_waypoints_s;
     const std::vector<double> &map_waypoints_x;
@@ -46,7 +49,7 @@ class TrajectoryPlanner {
       map_waypoints_x(_map_waypoints_x),
       map_waypoints_y(_map_waypoints_y), 
       time_step(_time_step), plan_time(_plan_time) {
-
+        desired_speed = 0.0;
         num_steps = (int) plan_time / time_step;
     }
 
@@ -82,7 +85,8 @@ class TrajectoryPlanner {
         std::vector<double> ptsx;
         std::vector<double> ptsy;
 
-        double desired_speed = mph2mps(49.5);
+        double ideal_speed   = mph2mps(49.5);
+        double accel         = mph2mps(0.224);
 
         double prev_x, prev_y, ref_x, ref_y, ref_yaw;
         int num_prev = previous_path_x.size();
@@ -104,10 +108,15 @@ class TrajectoryPlanner {
                 check_car_s += time_step * double(num_prev) * check_speed;
 
                 if ( (check_car_s > car_s) && (check_car_s-car_s < too_close_dist) ) {
-                    desired_speed = mph2mps(29.5);
                     too_close = true;
                 }
             }
+        }
+
+        if (too_close) {
+            desired_speed -= accel;
+        } else if (desired_speed < ideal_speed) {
+            desired_speed += accel;
         }
 
         // If there aren't sufficient previous point, extrapolate backwards

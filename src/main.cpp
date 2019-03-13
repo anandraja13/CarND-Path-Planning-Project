@@ -51,7 +51,11 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
 
-  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,
+  const double time_step = 0.02;
+  const double plan_time = 1.0;
+  TrajectoryPlanner planner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
+
+  h.onMessage([&planner,
                &map_waypoints_dx,&map_waypoints_dy]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
@@ -62,9 +66,9 @@ int main() {
 
       auto s = hasData(data);
 
-      const double time_step = 0.02;
-      const double plan_time = 1.0;
-      TrajectoryPlanner planner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
+      //const double time_step = 0.02;
+      //const double plan_time = 1.0;
+      //TrajectoryPlanner planner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
 
       if (s != "") {
         auto j = json::parse(s);
