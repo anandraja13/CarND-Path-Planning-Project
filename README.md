@@ -11,4 +11,4 @@ Self-Driving Car Engineer Nanodegree Program
 * Make the car change lanes using some rudimentary logic - however, jerk and accel limits are violated at turns.
 * Obey acceleration and jerk limits - but drive very conservatively.
 
-![alt text](images/5 miles incident-free.png)
+![alt text](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/5%20miles%20incident-free.png)
