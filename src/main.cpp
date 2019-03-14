@@ -51,6 +51,7 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
 
+  // Create a trajectory planner object
   const double time_step = 0.02;
   const double plan_time = 1.0;
   TrajectoryPlanner planner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
@@ -65,10 +66,6 @@ int main() {
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
       auto s = hasData(data);
-
-      //const double time_step = 0.02;
-      //const double plan_time = 1.0;
-      //TrajectoryPlanner planner(map_waypoints_s, map_waypoints_x, map_waypoints_y, time_step, plan_time);
 
       if (s != "") {
         auto j = json::parse(s);
@@ -102,14 +99,12 @@ int main() {
           vector<double> next_x_vals;
           vector<double> next_y_vals;
 
-          /**
-           * TODO: define a path made up of (x,y) points that the car will visit
-           *   sequentially every .02 seconds
-           */
+          // Update current state, unused path and sensor fusion data
           planner.setCurrentState(car_x, car_y, car_s, car_d, car_yaw, car_speed);
           planner.setPreviousPath(previous_path_x, previous_path_y, end_path_s, end_path_d);
           planner.setSensorFusion(sensor_fusion);
 
+          // Plan a trajectory!
           planner.plan(next_x_vals, next_y_vals);
 
           msgJson["next_x"] = next_x_vals;

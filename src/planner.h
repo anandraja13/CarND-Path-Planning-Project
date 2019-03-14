@@ -6,13 +6,13 @@
 #include <iterator>
 #include <cmath>
 
-#include <iostream>
-
 #include "spline.h"
 #include "helpers.h"
 
+// Class responsible for trajectory planning
 class TrajectoryPlanner {
 
+    // Struct for managing car state
     struct CarState {
         double x;
         double y;
@@ -24,21 +24,35 @@ class TrajectoryPlanner {
 
     CarState current_state;
 
+    // Time step between successive waypoints in seconds
     double time_step;
+
+    // Planning horizon in seconds
     double plan_time;
+
+    // Number of time steps in planning horizon
     double num_steps;
+
+    // Speed controller is trying to reach
     double desired_speed;
+
+    // Current lane id, possible values 0, 1, and 2
     int curr_lane;
 
+    // Map waypoints data
     const std::vector<double> &map_waypoints_s;
     const std::vector<double> &map_waypoints_x;
     const std::vector<double> &map_waypoints_y;
 
+    // Unused portion of previous path
     std::vector<double> previous_path_x;
     std::vector<double> previous_path_y;
+
+    // Frenet for end of path
     double end_path_s;
     double end_path_d;
 
+    // Sensor fusion data
     std::vector<std::vector<double>> sensor_fusion;
 
     public:
@@ -52,11 +66,16 @@ class TrajectoryPlanner {
       map_waypoints_y(_map_waypoints_y), 
       time_step(_time_step), plan_time(_plan_time) {
 
+        // Car is stationary to start
         desired_speed = 0.0;
-        curr_lane     = 1;
+
+        // Car starts in the middle lane
+        curr_lane = 1;
+
         num_steps = (int) plan_time / time_step;
     }
 
+    // Set current state of the car
     void setCurrentState(const double x, const double y, 
                      const double s, const double d, 
                      const double yaw, const double speed) {
@@ -68,6 +87,7 @@ class TrajectoryPlanner {
         current_state.speed = speed;
     }
 
+    // Set unused previous path
     void setPreviousPath(const std::vector<double> &prev_path_x, const std::vector<double> &prev_path_y, const double _end_path_s, const double _end_path_d) {
         previous_path_x = prev_path_x;
         previous_path_y = prev_path_y;
@@ -75,11 +95,13 @@ class TrajectoryPlanner {
         end_path_d      = _end_path_d;
     }
 
+    // Set sensor fusion data
     void setSensorFusion(const std::vector<std::vector<double>> &_sensor_fusion) {
 
         sensor_fusion = _sensor_fusion;
     }
 
+    // Plan trajectory
     void plan(std::vector<double> &next_x_vals, std::vector<double> &next_y_vals) {
         
         next_x_vals.reserve(num_steps);
@@ -99,6 +121,7 @@ class TrajectoryPlanner {
             car_s = end_path_s;
         }
 
+        // Determine what state car should transition to
         bool too_close          = false;
         bool change_lanes_left  = true;
         bool change_lanes_right = true;
@@ -145,19 +168,26 @@ class TrajectoryPlanner {
             }
         }
 
+        // If the car is too close, 
         if (too_close) {
+            // first try to change lanes to the left
             if (change_lanes_left && curr_lane>0) {
                 curr_lane -= 1;
                 desired_speed -= accel;
+            // otherwise, try to change lanes to the right
             } else if (change_lanes_right && curr_lane<2) {
                 curr_lane += 1;
                 desired_speed -= accel;
+            // or else just slow down
             } else {
                 desired_speed -= accel;
             }
+        // If the car is not too close accelerate if we aren't at the ideal speed
         } else if (desired_speed < ideal_speed) {
             desired_speed += accel;
         }
+
+        // Build anchor points for spline fit
 
         // If there aren't sufficient previous point, extrapolate backwards
         if (num_prev < 2) {
@@ -190,7 +220,7 @@ class TrajectoryPlanner {
             ptsy.push_back(ref_y);
         }
 
-        // Compute look ahead points along the lane at 30,60 and 90
+        // Compute look ahead points along the lane at 45,90 and 135 
         double look_dist(45.0);
         int num_looks(3);
 
@@ -203,6 +233,7 @@ class TrajectoryPlanner {
             ptsy.push_back(look_ahead_pt[1]);
         }
 
+        // Convert to local frame of reference
         for (int p = 0; p < ptsx.size(); p++) {
             auto local_pt = vehicle2local(ptsx[p], ptsy[p], ref_x, ref_y, ref_yaw);
             ptsx[p] = local_pt[0];
@@ -250,20 +281,6 @@ class TrajectoryPlanner {
             next_x_vals.push_back(x_point);
             next_y_vals.push_back(y_point);
         }
-
-        /*
-        double dist_inc = desired_speed * time_step;
-
-        // Make the car stay in the same lane
-        for (int n = 0; n < num_steps; n++) {
-            double next_s = current_state.s + dist_inc* (n+1);
-            double next_d = laneid2frenet(1);
-            std::vector<double> xy = getXY(next_s, next_d, map_waypoints_s, map_waypoints_dx, map_waypoints_dy);
-
-            next_x_vals.push_back( xy[0] );
-            next_y_vals.push_back( xy[1] );
-        }
-        */
     }
 
 };
