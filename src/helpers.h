@@ -48,9 +48,19 @@ int frenet2laneid(double d) {
   return int(d / lane_width);
 }
 
-bool in_my_lane(int my_lane_id, double d) {
+bool in_ego_lane(int my_lane_id, double d) {
   
   return (my_lane_id == frenet2laneid(d));
+}
+
+bool left_of_ego(int my_lane_id, double d) {
+  int left_lane = my_lane_id-1;
+  return ( (left_lane>=0) && (left_lane == frenet2laneid(d)) );
+}
+
+bool right_of_ego(int my_lane_id, double d) {
+  int right_lane = my_lane_id + 1;
+  return ( (right_lane <= 2) && (right_lane == frenet2laneid(d)) );
 }
 
 std::vector<double> vehicle2local(const double vehicle_x, const double vehicle_y, const double ref_x, const double ref_y, const double ref_yaw) {

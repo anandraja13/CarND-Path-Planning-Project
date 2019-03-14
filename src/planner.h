@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <iterator>
+#include <cmath>
 
 #include <iostream>
 
@@ -27,6 +28,7 @@ class TrajectoryPlanner {
     double plan_time;
     double num_steps;
     double desired_speed;
+    int curr_lane;
 
     const std::vector<double> &map_waypoints_s;
     const std::vector<double> &map_waypoints_x;
@@ -49,7 +51,9 @@ class TrajectoryPlanner {
       map_waypoints_x(_map_waypoints_x),
       map_waypoints_y(_map_waypoints_y), 
       time_step(_time_step), plan_time(_plan_time) {
+
         desired_speed = 0.0;
+        curr_lane     = 1;
         num_steps = (int) plan_time / time_step;
     }
 
@@ -86,7 +90,7 @@ class TrajectoryPlanner {
         std::vector<double> ptsy;
 
         double ideal_speed   = mph2mps(49.5);
-        double accel         = mph2mps(0.224);
+        double accel         = (0.224);
 
         double prev_x, prev_y, ref_x, ref_y, ref_yaw;
         int num_prev = previous_path_x.size();
@@ -95,26 +99,62 @@ class TrajectoryPlanner {
             car_s = end_path_s;
         }
 
-        bool too_close = false;
+        bool too_close          = false;
+        bool change_lanes_left  = true;
+        bool change_lanes_right = true;
+
         double too_close_dist = 30.0;
         for (auto sf : sensor_fusion) {
 
             double sf_d = sf[6];
-            if (in_my_lane(1, sf_d)) {
+            // If the vehicle is in the ego lane and is too close, set too_close to true
+            if (in_ego_lane(curr_lane, sf_d)) {
                 double vx(sf[3]), vy(sf[4]);
                 double check_speed = sqrt(vx * vx + vy * vy);
-                double check_car_s = sf[5];
+                double check_car_s(sf[5]);
 
                 check_car_s += time_step * double(num_prev) * check_speed;
 
                 if ( (check_car_s > car_s) && (check_car_s-car_s < too_close_dist) ) {
                     too_close = true;
+                }    
+            }
+            // Else, if the vehicle is to the left of the ego lane and is close by, set change_lanes_left to true 
+            else if (left_of_ego(curr_lane, sf_d)) {
+                double vx(sf[3]), vy(sf[4]);
+                double check_speed = sqrt(vx * vx + vy * vy);
+                double check_car_s(sf[5]);
+
+                check_car_s += time_step * double(num_prev) * check_speed;
+
+                if (std::fabs(check_car_s - car_s) < too_close_dist) {
+                    change_lanes_left = false;
+                }
+            }
+            // Else, if the vehicle is to the right of the ego lane and is close by, set change_lanes_right to true
+            else if (right_of_ego(curr_lane, sf_d)) {
+                double vx(sf[3]), vy(sf[4]);
+                double check_speed = sqrt(vx * vx + vy * vy);
+                double check_car_s(sf[5]);
+
+                check_car_s += time_step * double(num_prev) * check_speed;
+
+                if (std::fabs(check_car_s - car_s) < too_close_dist) {
+                    change_lanes_right = false;
                 }
             }
         }
 
         if (too_close) {
-            desired_speed -= accel;
+            if (change_lanes_left && curr_lane>0) {
+                curr_lane -= 1;
+                desired_speed -= accel;
+            } else if (change_lanes_right && curr_lane<2) {
+                curr_lane += 1;
+                desired_speed -= accel;
+            } else {
+                desired_speed -= accel;
+            }
         } else if (desired_speed < ideal_speed) {
             desired_speed += accel;
         }
@@ -155,7 +195,7 @@ class TrajectoryPlanner {
         int num_looks(3);
 
         car_s = current_state.s;
-        double car_d = laneid2frenet(1);
+        double car_d = laneid2frenet(curr_lane);
         for (int l = 1; l <= num_looks; l++) {
             std::vector<double> look_ahead_pt = getXY(car_s + l*look_dist, car_d, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 

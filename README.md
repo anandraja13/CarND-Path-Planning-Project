@@ -8,3 +8,4 @@ Self-Driving Car Engineer Nanodegree Program
 * Get the car to follow the middle lane.
 * Get the car to slow down to a pre-determined velocity when there's a car in front.
 * Make the car obey acceleration/deceleration limits.
+* Make the car change lanes using some rudimentary logic - however, jerk and accel limits are violated at turns.
