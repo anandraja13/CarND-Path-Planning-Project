@@ -1,7 +1,7 @@
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
    
-# Progress
+# Incremental Progress
 * Set up repo, get the stationary car in the scene.
 * Get the car to move in a straight line.
 * Add a TrajectoryPlanner class to handle the planning.
@@ -9,3 +9,6 @@ Self-Driving Car Engineer Nanodegree Program
 * Get the car to slow down to a pre-determined velocity when there's a car in front.
 * Make the car obey acceleration/deceleration limits.
 * Make the car change lanes using some rudimentary logic - however, jerk and accel limits are violated at turns.
+* Obey acceleration and jerk limits - but drive very conservatively.
+
+![alt text](images/5 miles incident-free.png)

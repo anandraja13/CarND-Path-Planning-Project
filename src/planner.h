@@ -191,7 +191,7 @@ class TrajectoryPlanner {
         }
 
         // Compute look ahead points along the lane at 30,60 and 90
-        double look_dist(30.0);
+        double look_dist(45.0);
         int num_looks(3);
 
         car_s = current_state.s;
