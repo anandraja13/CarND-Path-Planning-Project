@@ -25,6 +25,8 @@ The end result is a set of waypoints that are fed to a controller.
 
 ## Meeting Project Specifications
 
+### Code Compilation
+
 * The code compiles correctly.
 
 ```
@@ -39,6 +41,39 @@ ld: warning: directory not found for option '-L/usr/local/Cellar/libuv/1.11.0/li
 [100%] Built target path_planning
 ```
 
+### Valid Trajectories
+
+* The car is able to drive at least 4.32 miles without incident.
+
+  The vehicle is able to drive more than 15 miles without incident. The screenshots below from the simulator demonstrate this.
+  ![5 miles incident free](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/5%20miles%20incident-free.png)
+  ![15 miles incident free](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/best%2015%20miles.png)
+
+* The car drives according to the speed limit.
+
+  * The ego vehicle is able to consistently maintain a speed close to, but under 50 mph.
+  * The ego vehicle will slow down when confronted with a vehicle near by. Once it finds a new lane to get to, it will change lanes and begin accelerating again.
+  
+* Max Acceleration and Jerk are not Exceeded.
+
+  The ego vehicle stays within the specified acceleration and jerk limits. This is achieved by a combination of the following:
+  * Decelerating during a lane change.
+  * Increasing the look-ahead distance used in generating anchor points for the spline.
+
+* Car does not have collisions.
+
+  The ego vehicle avoids collisions by ensuring that we start decelerating in time whhen a vehicle is found in front.
+
+* The car stays in its lane, except for the time between changing lanes.
+
+  The ego vehicle stays in the center of the lane, except when changing lanes. Lane change maneuvers, like the one shown below last less than 3 seconds.
+
+* The car is able to change lanes
+  
+  The ego vehicle changes lanes using a simple, but effective behavior policy. The policy was described above.
+
+  ![lane change maneuver](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/changing%20lanes.png)
+
 ## Incremental Progress
 
 * Set up repo, get the stationary car in the scene.
@@ -50,6 +85,7 @@ ld: warning: directory not found for option '-L/usr/local/Cellar/libuv/1.11.0/li
 * Make the car change lanes using some rudimentary logic - however, jerk and accel limits are violated at turns.
 * Obey acceleration and jerk limits - but drives very conservatively.
 * Refactor behavior planning and update README.
+* Write up project report.
 
 ![alt text](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/5%20miles%20incident-free.png)
 ![alt text](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/changing%20lanes.png)
