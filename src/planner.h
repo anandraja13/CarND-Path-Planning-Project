@@ -35,6 +35,8 @@ class TrajectoryPlanner {
 
     // Speed controller is trying to reach
     double desired_speed;
+    double ideal_speed;
+    double accel;
 
     // Current lane id, possible values 0, 1, and 2
     int curr_lane;
@@ -55,6 +57,91 @@ class TrajectoryPlanner {
     // Sensor fusion data
     std::vector<std::vector<double>> sensor_fusion;
 
+    // Transition to new state
+    void transition_state(int num_prev, double car_s) {
+        // Analyze sensor fusion data
+        double too_close_dist = 30.0;
+
+        // Determine what state car should transition to
+        bool too_close = false;
+        bool change_lanes_left = true;
+        bool change_lanes_right = true;
+
+        for (auto sf : sensor_fusion)
+        {
+            double sf_d = sf[6];
+            // If the vehicle is in the ego lane and is too close, set too_close to true
+            if (in_ego_lane(curr_lane, sf_d))
+            {
+                double vx(sf[3]), vy(sf[4]);
+                double check_speed = sqrt(vx * vx + vy * vy);
+                double check_car_s(sf[5]);
+
+                check_car_s += time_step * double(num_prev) * check_speed;
+
+                if ((check_car_s > car_s) && (check_car_s - car_s < too_close_dist))
+                {
+                    too_close = true;
+                }
+            }
+            // Else, if the vehicle is to the left of the ego lane and is close by, set change_lanes_left to true
+            else if (left_of_ego(curr_lane, sf_d))
+            {
+                double vx(sf[3]), vy(sf[4]);
+                double check_speed = sqrt(vx * vx + vy * vy);
+                double check_car_s(sf[5]);
+
+                check_car_s += time_step * double(num_prev) * check_speed;
+
+                if (std::fabs(check_car_s - car_s) < too_close_dist)
+                {
+                    change_lanes_left = false;
+                }
+            }
+            // Else, if the vehicle is to the right of the ego lane and is close by, set change_lanes_right to true
+            else if (right_of_ego(curr_lane, sf_d))
+            {
+                double vx(sf[3]), vy(sf[4]);
+                double check_speed = sqrt(vx * vx + vy * vy);
+                double check_car_s(sf[5]);
+
+                check_car_s += time_step * double(num_prev) * check_speed;
+
+                if (std::fabs(check_car_s - car_s) < too_close_dist)
+                {
+                    change_lanes_right = false;
+                }
+            }
+        }
+
+        // If the car is too close,
+        if (too_close)
+        {
+            // first try to change lanes to the left
+            if (change_lanes_left && curr_lane > 0)
+            {
+                curr_lane -= 1;
+                desired_speed -= accel;
+                // otherwise, try to change lanes to the right
+            }
+            else if (change_lanes_right && curr_lane < 2)
+            {
+                curr_lane += 1;
+                desired_speed -= accel;
+                // or else just slow down
+            }
+            else
+            {
+                desired_speed -= accel;
+            }
+            // If the car is not too close accelerate if we aren't at the ideal speed
+        }
+        else if (desired_speed < ideal_speed)
+        {
+            desired_speed += accel;
+        }
+    }
+
     public:
     TrajectoryPlanner(
                 const std::vector<double> &_map_waypoints_s, 
@@ -68,6 +155,10 @@ class TrajectoryPlanner {
 
         // Car is stationary to start
         desired_speed = 0.0;
+
+        // Speed limit is 50 miles/hour
+        ideal_speed   = mph2mps(49.5);
+        accel         = (0.224);
 
         // Car starts in the middle lane
         curr_lane = 1;
@@ -111,9 +202,6 @@ class TrajectoryPlanner {
         std::vector<double> ptsx;
         std::vector<double> ptsy;
 
-        double ideal_speed   = mph2mps(49.5);
-        double accel         = (0.224);
-
         double prev_x, prev_y, ref_x, ref_y, ref_yaw;
         int num_prev = previous_path_x.size();
         double car_s;
@@ -126,66 +214,7 @@ class TrajectoryPlanner {
         bool change_lanes_left  = true;
         bool change_lanes_right = true;
 
-        double too_close_dist = 30.0;
-        for (auto sf : sensor_fusion) {
-
-            double sf_d = sf[6];
-            // If the vehicle is in the ego lane and is too close, set too_close to true
-            if (in_ego_lane(curr_lane, sf_d)) {
-                double vx(sf[3]), vy(sf[4]);
-                double check_speed = sqrt(vx * vx + vy * vy);
-                double check_car_s(sf[5]);
-
-                check_car_s += time_step * double(num_prev) * check_speed;
-
-                if ( (check_car_s > car_s) && (check_car_s-car_s < too_close_dist) ) {
-                    too_close = true;
-                }    
-            }
-            // Else, if the vehicle is to the left of the ego lane and is close by, set change_lanes_left to true 
-            else if (left_of_ego(curr_lane, sf_d)) {
-                double vx(sf[3]), vy(sf[4]);
-                double check_speed = sqrt(vx * vx + vy * vy);
-                double check_car_s(sf[5]);
-
-                check_car_s += time_step * double(num_prev) * check_speed;
-
-                if (std::fabs(check_car_s - car_s) < too_close_dist) {
-                    change_lanes_left = false;
-                }
-            }
-            // Else, if the vehicle is to the right of the ego lane and is close by, set change_lanes_right to true
-            else if (right_of_ego(curr_lane, sf_d)) {
-                double vx(sf[3]), vy(sf[4]);
-                double check_speed = sqrt(vx * vx + vy * vy);
-                double check_car_s(sf[5]);
-
-                check_car_s += time_step * double(num_prev) * check_speed;
-
-                if (std::fabs(check_car_s - car_s) < too_close_dist) {
-                    change_lanes_right = false;
-                }
-            }
-        }
-
-        // If the car is too close, 
-        if (too_close) {
-            // first try to change lanes to the left
-            if (change_lanes_left && curr_lane>0) {
-                curr_lane -= 1;
-                desired_speed -= accel;
-            // otherwise, try to change lanes to the right
-            } else if (change_lanes_right && curr_lane<2) {
-                curr_lane += 1;
-                desired_speed -= accel;
-            // or else just slow down
-            } else {
-                desired_speed -= accel;
-            }
-        // If the car is not too close accelerate if we aren't at the ideal speed
-        } else if (desired_speed < ideal_speed) {
-            desired_speed += accel;
-        }
+        transition_state(num_prev, car_s);
 
         // Build anchor points for spline fit
 
