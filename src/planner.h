@@ -22,6 +22,7 @@ class TrajectoryPlanner {
         double speed;
     };
 
+    // Current state of the car
     CarState current_state;
 
     // Time step between successive waypoints in seconds
@@ -195,6 +196,7 @@ class TrajectoryPlanner {
     // Plan trajectory
     void plan(std::vector<double> &next_x_vals, std::vector<double> &next_y_vals) {
         
+        // Preallocate memory
         next_x_vals.reserve(num_steps);
         next_y_vals.reserve(num_steps);
 
