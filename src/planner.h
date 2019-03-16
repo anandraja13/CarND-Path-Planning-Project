@@ -82,7 +82,7 @@ class TrajectoryPlanner {
                 if ((check_car_s > car_s) && (check_car_s - car_s < too_close_dist))
                 {
                     too_close = true;
-                }
+                } 
             }
             // Else, if the vehicle is to the left of the ego lane and is close by, set change_lanes_left to true
             else if (left_of_ego(curr_lane, sf_d))
