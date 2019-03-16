@@ -86,6 +86,3 @@ ld: warning: directory not found for option '-L/usr/local/Cellar/libuv/1.11.0/li
 * Obey acceleration and jerk limits - but drives very conservatively.
 * Refactor behavior planning and update README.
 * Write up project report.
-
-![alt text](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/5%20miles%20incident-free.png)
-![alt text](https://github.com/anandraja13/CarND-Path-Planning-Project/blob/master/images/changing%20lanes.png)
